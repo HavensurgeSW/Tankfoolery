@@ -50,6 +50,14 @@ public class AgentBehaviour : MonoBehaviour
         this.foodHandler = foodHandler;
     }
 
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.P)) {
+            Movement(MoveDirection.Up, 100, 100);
+        }
+    }
+
     public void Movement(MoveDirection direction, int limitX, int limitY, Action OnReachLimitY = null, Action OnReachLimitX = null)
     {
         switch (direction)
