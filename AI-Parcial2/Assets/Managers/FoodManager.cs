@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.EditorTools;
 using UnityEngine;
+using AI.Utils;
 
 public class FoodManager : MonoBehaviour
 {
@@ -16,7 +17,7 @@ public class FoodManager : MonoBehaviour
     
 
     public void SpawnFood(Vector2Int foodPos){
-        GameObject tempFood = Instantiate(FoodPrefab, new Vector3(foodPos.x *GameGrid.GridSpaceSize, foodPos.y * GameGrid.GridSpaceSize, -5f), Quaternion.identity);
+        GameObject tempFood = Instantiate(FoodPrefab, new Vector3(foodPos.x *HSSUtils.GridSpaceSize, foodPos.y * HSSUtils.GridSpaceSize, -5f), Quaternion.identity);
         tempFood.name = "Food: "+ foodPos.x + " "+ foodPos.y;
         tempFood.transform.parent = transform;
         Food f = new Food(foodPos);

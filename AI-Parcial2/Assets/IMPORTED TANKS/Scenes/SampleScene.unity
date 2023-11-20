@@ -198,7 +198,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   foodManager: {fileID: 1036365968}
-  gridSize: 180
+  gridSize: 100
   gameGrid: {fileID: 284759619}
 --- !u!4 &579756406
 Transform:

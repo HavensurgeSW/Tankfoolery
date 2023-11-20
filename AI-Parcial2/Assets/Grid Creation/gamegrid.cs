@@ -1,15 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using AI.Utils;
 
 public class gamegrid : MonoBehaviour
 {
-    public float GridSpaceSize { get; private set; } = 5f;
-
-
-    private int height = 100;
-    private int width = 100;
-
+    
     [SerializeField] private GameObject gridCellPrefab;
     private GameObject[,] gameGrid;
 
@@ -23,7 +19,7 @@ public class gamegrid : MonoBehaviour
         {
             for (int x = 0; x < size.x; x++)
             {
-                gameGrid[x, y] = Instantiate(gridCellPrefab, new Vector3(x * GridSpaceSize, y * GridSpaceSize), Quaternion.identity);
+                gameGrid[x, y] = Instantiate(gridCellPrefab, new Vector3(x * HSSUtils.GridSpaceSize, y * HSSUtils.GridSpaceSize), Quaternion.identity);
                 gameGrid[x, y].GetComponent<GridCell>().SetPosition(x, y);
                 gameGrid[x, y].transform.parent = transform;
                 gameGrid[x, y].gameObject.name = "Grid: " + x.ToString() + " " + y.ToString();
