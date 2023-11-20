@@ -2,22 +2,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Food 
-{
-    [SerializeField] GameObject FoodPrefab;
-    private Vector2Int pos;
-    bool eaten;
-
+public class Food {
     
-    void Init() {
-        pos.x = 0;
-        pos.y = 0;
-        eaten = false;
+    private Vector2Int pos;
+    
+    public Food(Vector2Int position){
+        pos = position;
     }
-    void Init(Vector2Int position) { 
+
+    public void Init(Vector2Int position) { 
         pos.x = position.x;
         pos.y = position.y;
-        eaten = false;
+        
     }
 
     public void SetPosition(Vector2Int position){ 
