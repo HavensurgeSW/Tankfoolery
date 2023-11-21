@@ -37,7 +37,7 @@ public class GameManager : MonoBehaviour
         for (int i = 0; i < gridSize; i++)
         {
             Instantiate(agent);
-            agent.GetComponent<Agent>().Init(new Vector2Int(i, gridSize-1), foodManager);
+            agent.GetComponent<Agent>().Init(new Vector2Int(i, gridSize-1), foodManager, false);
         }
     }
     void SwitchTurn() { 

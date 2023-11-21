@@ -13,12 +13,20 @@ public class Agent : MonoBehaviour
 
     [SerializeField] AgentBehaviour behaviour;
     FoodManager foodHandler;
-    
-    
-    public void Init(Vector2Int pos, FoodManager fHandler)
+
+
+    public void Init(Vector2Int pos, FoodManager fHandler, bool team = true)
     {
         UpdatePosition(pos);
         foodHandler = fHandler;
+
+        if (team)
+        {
+            this.transform.GetComponent<MeshRenderer>().material = teamMaterials[0];
+        }
+        else {
+            this.transform.GetComponent<MeshRenderer>().material = teamMaterials[1];
+        }
     }
 
     public void UpdatePosition(Vector2Int pos) {
