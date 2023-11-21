@@ -12,10 +12,13 @@ public class Agent : MonoBehaviour
     [SerializeField] Vector2Int position;
 
     [SerializeField] AgentBehaviour behaviour;
+    FoodManager foodHandler;
     
-    public void Init(Vector2Int pos)
+    
+    public void Init(Vector2Int pos, FoodManager fHandler)
     {
         UpdatePosition(pos);
+        foodHandler = fHandler;
     }
 
     public void UpdatePosition(Vector2Int pos) {

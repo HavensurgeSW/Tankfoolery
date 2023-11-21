@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 2798014662475481944}
   - component: {fileID: 7294446672299917493}
   - component: {fileID: -3710149861411922904}
+  - component: {fileID: -5601715418573435912}
   m_Layer: 0
   m_Name: Agent
   m_TagString: Untagged
@@ -29,7 +30,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2992710943409077477}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -5}
+  m_LocalPosition: {x: 495, y: 495, z: -5}
   m_LocalScale: {x: 3, y: 3, z: 3}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -127,5 +128,21 @@ MonoBehaviour:
   teamMaterials:
   - {fileID: 2100000, guid: 8dcc2ad41841a5d40b4e09d078cb9444, type: 2}
   - {fileID: 2100000, guid: 466ca7aa40cfe5a4889c796f4274e451, type: 2}
-  position: {x: 0, y: 0}
+  position: {x: 99, y: 99}
   behaviour: {fileID: 7294446672299917493}
+--- !u!54 &-5601715418573435912
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2992710943409077477}
+  serializedVersion: 2
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_UseGravity: 0
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 126
+  m_CollisionDetection: 0

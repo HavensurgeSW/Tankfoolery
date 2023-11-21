@@ -17,27 +17,23 @@ public class AgentBehaviour : MonoBehaviour
         NONE
     }
 
-   
     public string foodTag = "Food";
 
-    private FoodManager foodHandler = null;
-    private Action<Vector2Int> onFoodEaten = null;
-
-    private void OnTriggerEnter2D(Collider2D collision)
+    FoodManager foodHandler = null;
+    Action<Vector2Int> onFoodEaten = null;
+    private void Awake()
     {
-        if (collision.CompareTag(foodTag))
+        foodHandler = FindObjectOfType<FoodManager>();
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.tag ==foodTag)
         {
             Debug.Log("Collided with " + foodTag);
-            Food food = null;
-
-            if (collision.gameObject.TryGetComponent(out food))
-            {
-                onFoodEaten?.Invoke(food.GetPosition());
-                foodHandler.EatFood(food.GetPosition());
-
-                collision.enabled = false;               
-                Destroy(collision.gameObject, 0.25f);
-            }
+            Food food = collision.transform.GetComponent<Food>();
+            foodHandler.EatFood(food.GetPosition());
+            Destroy(collision.gameObject, 0.25f);          
         }
     }
 

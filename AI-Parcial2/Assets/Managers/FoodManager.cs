@@ -12,16 +12,17 @@ public class FoodManager : MonoBehaviour
     [SerializeField] gamegrid GameGrid;
     [SerializeField] GameObject FoodPrefab;
 
-    [SerializeField]public List<Food> foodList { get; private set; } = new List<Food>();
+    [SerializeField] public List<Food> foodList { get; private set; } = new List<Food>();
 
     
 
     public void SpawnFood(Vector2Int foodPos){
-        GameObject tempFood = Instantiate(FoodPrefab, new Vector3(foodPos.x *HSSUtils.GridSpaceSize, foodPos.y * HSSUtils.GridSpaceSize, -5f), Quaternion.identity);
+        GameObject tempFood = Instantiate(FoodPrefab, new Vector3(foodPos.x *HSSUtils.GridSpaceSize, foodPos.y * HSSUtils.GridSpaceSize, HSSUtils.defaultZ), Quaternion.identity);
         tempFood.name = "Food: "+ foodPos.x + " "+ foodPos.y;
         tempFood.transform.parent = transform;
-        Food f = new Food(foodPos);
-        foodList.Add(f);
+
+        tempFood.GetComponent<Food>().Init(foodPos);
+        foodList.Add(tempFood.GetComponentInChildren<Food>());
         currentFood++;
     }
 
@@ -59,8 +60,10 @@ public class FoodManager : MonoBehaviour
 
     public void EatFood(Vector2Int foodPosition){
         Food toRemove = foodList.Find(food => food.GetPosition() == foodPosition);
+            Debug.Log("Removed food at: "+ foodPosition.x+" " +foodPosition.y);
         if (foodList.Contains(toRemove)) {
             foodList.Remove(toRemove);
+            GameGrid.GetGridCell(foodPosition).FoodWasEaten();
             currentFood--;
         }
     }

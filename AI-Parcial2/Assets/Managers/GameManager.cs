@@ -22,10 +22,23 @@ public class GameManager : MonoBehaviour
 
         gameGrid.CreateGrid(sizeAPI);
         foodManager.PopulateGridWithFood(gridSize);
-        
-        Instantiate(agent);
-        agent.GetComponent<Agent>().Init(new Vector2Int(0,0));
 
+        PopulateBoardWithAgents();
+
+    }
+
+    void PopulateBoardWithAgents() { 
+        for (int i = 0; i < gridSize; i++)
+        {
+            Instantiate(agent);
+            agent.GetComponent<Agent>().Init(new Vector2Int(i, 0), foodManager);
+        }
+
+        for (int i = 0; i < gridSize; i++)
+        {
+            Instantiate(agent);
+            agent.GetComponent<Agent>().Init(new Vector2Int(i, gridSize-1), foodManager);
+        }
     }
     void SwitchTurn() { 
         if (playerTurn) { playerTurn = false; } else { playerTurn = true; }
