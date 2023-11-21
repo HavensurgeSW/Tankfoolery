@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using AI.Utils;
 
 public class AgentBehaviour : MonoBehaviour
 {
@@ -50,22 +51,18 @@ public class AgentBehaviour : MonoBehaviour
         this.foodHandler = foodHandler;
     }
 
-
-    private void Update()
+    public Vector2Int Movement(MoveDirection direction, int currentX, int currentY, int limitX, int limitY, Action OnReachLimitY = null, Action OnReachLimitX = null)
     {
-        if (Input.GetKeyDown(KeyCode.P)) {
-            Movement(MoveDirection.Up, 100, 100);
-        }
-    }
-
-    public void Movement(MoveDirection direction, int limitX, int limitY, Action OnReachLimitY = null, Action OnReachLimitX = null)
-    {
+        Vector2Int finalPos = new Vector2Int(currentX, currentY);
         switch (direction)
         {
             case MoveDirection.Left:
-                if (transform.position.x - 1 > 0)
+                if (currentX-1 > 0)
                 {
-                    transform.position = new Vector3(transform.position.x - 1, transform.position.y, transform.position.z);
+                    //transform.position = new Vector3(transform.position.x - 1, transform.position.y, transform.position.z);
+                    finalPos.x -= 1;
+                    
+                    
                 }
                 else
                 {
@@ -73,9 +70,11 @@ public class AgentBehaviour : MonoBehaviour
                 }
                 break;
             case MoveDirection.Right:
-                if (transform.position.x + 1 < limitX)
+                if (currentX + 1 < limitX)
                 {
-                    transform.position = new Vector3(transform.position.x + 1, transform.position.y, transform.position.z);
+                    //transform.position = new Vector3(transform.position.x + 1, transform.position.y, transform.position.z);
+                    finalPos.x += 1;
+                   
                 }
                 else
                 {
@@ -83,9 +82,11 @@ public class AgentBehaviour : MonoBehaviour
                 }
                 break;
             case MoveDirection.Up:
-                if (transform.position.y + 1 < limitY)
+                if (currentY + 1 < limitY)
                 {
-                    transform.position = new Vector3(transform.position.x, transform.position.y + 1, transform.position.z);
+                    //transform.position = new Vector3(transform.position.x, (transform.position.y + 1) *HSSUtils.GridSpaceSize, transform.position.z);
+                    finalPos.y += 1;
+                   
                 }
                 else
                 {
@@ -93,9 +94,11 @@ public class AgentBehaviour : MonoBehaviour
                 }
                 break;
             case MoveDirection.Down:
-                if (transform.position.y - 1 > 0)
+                if (currentY - 1 > 0)
                 {
-                    transform.position = new Vector3(transform.position.x, transform.position.y + 1, transform.position.z);
+                    //transform.position = new Vector3(transform.position.x, transform.position.y + 1, transform.position.z);
+                    finalPos.y -= 1;
+
                 }
                 else
                 {
@@ -106,6 +109,7 @@ public class AgentBehaviour : MonoBehaviour
                 transform.position = transform.position;
                 break;
         }
+        return finalPos;
     }
 }
 

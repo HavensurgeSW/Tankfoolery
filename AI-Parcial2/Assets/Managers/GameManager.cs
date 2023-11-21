@@ -6,10 +6,11 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
     [SerializeField]FoodManager foodManager;
+    [SerializeField]GameObject agent;
 
     [Range(100, 500), Tooltip("Grid Size")] public int gridSize = 100;
-    [SerializeField]gamegrid gameGrid;
-
+    [SerializeField] gamegrid gameGrid;
+   
     bool playerTurn = false;
     void Start()
     {
@@ -21,6 +22,9 @@ public class GameManager : MonoBehaviour
 
         gameGrid.CreateGrid(sizeAPI);
         foodManager.PopulateGridWithFood(gridSize);
+        
+        Instantiate(agent);
+        agent.GetComponent<Agent>().Init(new Vector2Int(0,0));
 
     }
     void SwitchTurn() { 
