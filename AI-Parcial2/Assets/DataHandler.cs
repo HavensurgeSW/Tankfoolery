@@ -3,17 +3,55 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
-public class DataHandler : MonoBehaviour
+public static class DataHandler<T> where T : class
 {
+    public static string directory = "/SavedSimulations/";
+    public static string fileName = "BestAgent.txt";
 
-    string saveData;
-    void SaveToJson() {
-        string json = JsonUtility.ToJson(saveData, true);
-        File.WriteAllText(Application.dataPath + "/ArtInt.json", json);
+    public static void Save(T savedObject, string team, string generation, string fitness, string foodAte)
+    {
+        string dir = Application.persistentDataPath + directory + team + "/";
+
+        if (!Directory.Exists(dir))
+        {
+            Directory.CreateDirectory(dir);
+        }
+
+        string[] baseFileName = fileName.Split(".");
+        string fullFileName = baseFileName[0] + "_" + team + "_[Gen " + generation + "]_[Fitness " + fitness + "]_[Food Ate " + foodAte + "]." + baseFileName[1];
+        string dataSerialized = JsonUtility.ToJson(savedObject);
+
+        File.WriteAllText(dir + fullFileName, dataSerialized);
     }
 
-    void LoadFromJson() {
-        string json = File.ReadAllText(Application.dataPath + "/ArtInt.json");
-        string data = JsonUtility.FromJson<string>(json);
+    public static void Save(T savedObject)
+    {
+        string dir = Application.persistentDataPath + directory;
+
+        if (!Directory.Exists(dir))
+        {
+            Directory.CreateDirectory(dir);
+        }
+
+        string dataSerialized = JsonUtility.ToJson(savedObject);
+        File.WriteAllText(dir + fileName, dataSerialized);
+    }
+
+    public static T Load(string teamFrom, string fileName)
+    {
+        string fullPath = Application.persistentDataPath + directory + teamFrom + "/" + fileName;
+        T newObj = null;
+
+        if (File.Exists(fullPath))
+        {
+            string dataDeserialized = File.ReadAllText(fullPath);
+            newObj = JsonUtility.FromJson<T>(dataDeserialized);
+        }
+        else
+        {
+            Debug.LogWarning("The file wasn't found");
+        }
+
+        return newObj;
     }
 }

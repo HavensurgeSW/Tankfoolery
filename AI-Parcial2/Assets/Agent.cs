@@ -263,11 +263,9 @@ public class Agent : MonoBehaviour
             transform.position = HSSUtils.GetWorldFromPosition(position);
         }
     }
-    public void Init(Vector2Int pos, FoodManager fHandler, bool team = true)
+    public void Init(Vector2Int pos, bool team = true)
     {
         UpdatePosition(pos);
-        foodHandler = fHandler;
-
         if (team)
         {
             this.transform.GetComponent<MeshRenderer>().material = teamMaterials[0];

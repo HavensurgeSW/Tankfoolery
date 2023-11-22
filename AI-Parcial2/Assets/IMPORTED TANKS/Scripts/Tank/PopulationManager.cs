@@ -1,425 +1,431 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using AI.Utils;
 
 public class PopulationManager : MonoBehaviour
-{
-    public GameObject TankPrefab;
-    public GameObject MinePrefab;
-
-    public int PopulationCount = 40;
-    public int MinesCount = 50;
-
-    public Vector3 SceneHalfExtents = new Vector3 (20.0f, 0.0f, 20.0f);
-
-    public float GenerationDuration = 20.0f;
-    public int IterationCount = 1;
-
-    public int EliteCount = 4;
-    public float MutationChance = 0.10f;
-    public float MutationRate = 0.01f;
-
-    public int InputsCount = 4;
-    public int HiddenLayers = 1;
-    public int OutputsCount = 2;
-    public int NeuronsCountPerHL = 7;
-    public float Bias = 1f;
-    public float P = 0.5f;
-
-
-    GeneticAlgorithm genAlg;
-
-    List<Tank> populationGOs = new List<Tank>();
-    List<Genome> population = new List<Genome>();
-    List<NeuralNetwork> brains = new List<NeuralNetwork>();
-    List<GameObject> mines = new List<GameObject>();
-    List<GameObject> goodMines = new List<GameObject>();
-    List<GameObject> badMines = new List<GameObject>();
-     
-    float accumTime = 0;
-    bool isRunning = false;
-
-    public int generation {
-        get; private set;
-    }
-
-    public float bestFitness 
     {
-        get; private set;
-    }
+        [Header("Team Configurations")]
+        public string ID = null;
+        public GameObject AgentInstance;
+        public int PopulationCount = 40;
+        public int IterationCount = 1;
 
-    public float avgFitness 
-    {
-        get; private set;
-    }
+        public int EliteCount = 4;
+        public float MutationChance = 0.10f;
+        public float MutationRate = 0.01f;
 
-    public float worstFitness 
-    {
-        get; private set;
-    }
+        public int InputsCount = 4;
+        public int HiddenLayers = 1;
+        public int OutputsCount = 2;
+        public int NeuronsCountPerHL = 7;
+        public float Bias = 1f;
+        public float Sigmoid = 0.5f;
 
-    private float getBestFitness()
-    {
-        float fitness = 0;
-        foreach(Genome g in population)
+        [Header("Saving")]
+        public bool saveDataOnNextEvolve = false;
+
+        GeneticAlgorithm geneticAlgorithm;
+        private const string idDataBestBrain = "bestBrainInGenerations";
+        private Genome bestGenome = null;
+        private int actualTurn = 1;
+        private gamegrid mapHandler = null;
+        public FoodManager foodHandler = null;
+
+        List<Agent> agentsInTeam = new List<Agent>();
+        List<Genome> population = new List<Genome>();
+        List<NeuralNetwork> brains = new List<NeuralNetwork>();
+
+        bool isRunning = false;
+
+        public int generation
         {
-            if (fitness < g.fitness)
-                fitness = g.fitness;
+            get; private set;
+        }
+        public float bestFitness
+        {
+            get; private set;
+        }
+        public float actualPopulation
+        {
+            get; private set;
+        }
+        public float avgFitness
+        {
+            get; private set;
+        }
+        public float worstFitness
+        {
+            get; private set;
         }
 
-        return fitness;
-    }
+        public Action onTeamWipe = null;
 
-    private float getAvgFitness()
-    {
-        float fitness = 0;
-        foreach(Genome g in population)
+        public float GetBestFitness()
         {
-            fitness += g.fitness;
-        }
-
-        return fitness / population.Count;
-    }
-
-    private float getWorstFitness()
-    {
-        float fitness = float.MaxValue;
-        foreach(Genome g in population)
-        {
-            if (fitness > g.fitness)
-                fitness = g.fitness;
-        }
-
-        return fitness;
-    }
-
-    static PopulationManager instance = null;
-
-    public static PopulationManager Instance
-    {
-        get
-        {
-            if (instance == null)
-                instance = FindObjectOfType<PopulationManager>();
-
-            return instance;
-        }
-    }
-
-    void Awake()
-    {
-        instance = this;
-    }
-
-    void Start()
-    {
-    }
-
-    public void StartSimulation()
-    {
-        // Create and confiugre the Genetic Algorithm
-        genAlg = new GeneticAlgorithm(EliteCount, MutationChance, MutationRate);
-
-        GenerateInitialPopulation();
-        CreateMines();
-
-        isRunning = true;
-    }
-
-    public void PauseSimulation()
-    {
-        isRunning = !isRunning;
-    }
-
-    public void StopSimulation()
-    {
-        isRunning = false;
-
-        generation = 0;
-
-        // Destroy previous tanks (if there are any)
-        DestroyTanks();
-
-        // Destroy all mines
-        DestroyMines();
-    }
-
-    // Generate the random initial population
-    void GenerateInitialPopulation()
-    {
-        generation = 0;
-
-        // Destroy previous tanks (if there are any)
-        DestroyTanks();
-        
-        for (int i = 0; i < PopulationCount; i++)
-        {
-            NeuralNetwork brain = CreateBrain();
-            
-            Genome genome = new Genome(brain.GetTotalWeightsCount());
-
-            brain.SetWeights(genome.genome);
-            brains.Add(brain);
-
-            population.Add(genome);
-            populationGOs.Add(CreateTank(genome, brain));
-        }
-
-        accumTime = 0.0f;
-    }
-
-    // Creates a new NeuralNetwork
-    NeuralNetwork CreateBrain()
-    {
-        NeuralNetwork brain = new NeuralNetwork();
-
-        // Add first neuron layer that has as many neurons as inputs
-        brain.AddFirstNeuronLayer(InputsCount, Bias, P);
-
-        for (int i = 0; i < HiddenLayers; i++)
-        {
-            // Add each hidden layer with custom neurons count
-            brain.AddNeuronLayer(NeuronsCountPerHL, Bias, P);
-        }
-
-        // Add the output layer with as many neurons as outputs
-        brain.AddNeuronLayer(OutputsCount, Bias, P);
-
-        return brain;
-    }
-
-    // Evolve!!!
-    void Epoch()
-    {
-        // Increment generation counter
-        generation++;
-
-        // Calculate best, average and worst fitness
-        bestFitness = getBestFitness();
-        avgFitness = getAvgFitness();
-        worstFitness = getWorstFitness();
-
-        // Evolve each genome and create a new array of genomes
-        Genome[] newGenomes = genAlg.Epoch(population.ToArray());
-
-        // Clear current population
-        population.Clear();
-
-        // Add new population
-        population.AddRange(newGenomes);
-
-        // Set the new genomes as each NeuralNetwork weights
-        for (int i = 0; i < PopulationCount; i++)
-        {
-            NeuralNetwork brain = brains[i];
-
-            brain.SetWeights(newGenomes[i].genome);
-
-            populationGOs[i].SetBrain(newGenomes[i], brain);
-            populationGOs[i].transform.position = GetRandomPos();
-            populationGOs[i].transform.rotation = GetRandomRot();
-        }
-    }
-
-    // Update is called once per frame
-    void FixedUpdate () 
-	{
-        if (!isRunning)
-            return;
-        
-        float dt = Time.fixedDeltaTime;
-
-        for (int i = 0; i < Mathf.Clamp((float)(IterationCount / 100.0f) * 50, 1, 50); i++)
-        {
-            foreach (Tank t in populationGOs)
+            float fitness = 0;
+            foreach (Genome g in population)
             {
-                // Get the nearest mine
-                GameObject mine = GetNearestMine(t.transform.position);
-
-                // Set the nearest mine to current tank
-                t.SetNearestMine(mine);
-
-                mine = GetNearestGoodMine(t.transform.position);
-
-                // Set the nearest mine to current tank
-                t.SetGoodNearestMine(mine);
-
-                mine = GetNearestBadMine(t.transform.position);
-
-                // Set the nearest mine to current tank
-                t.SetBadNearestMine(mine);
-
-                // Think!! 
-                t.Think(dt);
-
-                // Just adjust tank position when reaching world extents
-                Vector3 pos = t.transform.position;
-                if (pos.x > SceneHalfExtents.x)
-                    pos.x -= SceneHalfExtents.x * 2;
-                else if (pos.x < -SceneHalfExtents.x)
-                    pos.x += SceneHalfExtents.x * 2;
-
-                if (pos.z > SceneHalfExtents.z)
-                    pos.z -= SceneHalfExtents.z * 2;
-                else if (pos.z < -SceneHalfExtents.z)
-                    pos.z += SceneHalfExtents.z * 2;
-
-                // Set tank position
-                t.transform.position = pos;
+                if (fitness < g.fitness)
+                {
+                    fitness = g.fitness;
+                }
             }
 
-            // Check the time to evolve
-            accumTime += dt;
-            if (accumTime >= GenerationDuration)
+            return fitness;
+        }
+
+        public float GetAverageFitness()
+        {
+            float fitness = 0;
+            foreach (Genome g in population)
             {
-                accumTime -= GenerationDuration;
-                Epoch();
-                break;
+                fitness += g.fitness;
             }
-        }
-	}
-
-#region Helpers
-    Tank CreateTank(Genome genome, NeuralNetwork brain)
-    {
-        Vector3 position = GetRandomPos();
-        GameObject go = Instantiate<GameObject>(TankPrefab, position, GetRandomRot());
-        Tank t = go.GetComponent<Tank>();
-        t.SetBrain(genome, brain);
-        return t;
-    }
-
-    void DestroyMines()
-    {
-        foreach (GameObject go in mines)
-            Destroy(go);
-
-        mines.Clear();
-        goodMines.Clear();
-        badMines.Clear();
-    }
-
-    void DestroyTanks()
-    {
-        foreach (Tank go in populationGOs)
-            Destroy(go.gameObject);
-
-        populationGOs.Clear();
-        population.Clear();
-        brains.Clear();
-    }
-
-    void CreateMines()
-    {
-        // Destroy previous created mines
-        DestroyMines();
-
-        for (int i = 0; i < MinesCount; i++)
-        {
-            Vector3 position = GetRandomPos();
-            GameObject go = Instantiate<GameObject>(MinePrefab, position, Quaternion.identity);
-
-            bool good = Random.Range(-1.0f, 1.0f) >= 0;
-
-            SetMineGood(good, go);
-
-            mines.Add(go);
-        }
-    }
-
-    void SetMineGood(bool good, GameObject go)
-    {
-        if (good)
-        {
-            go.GetComponent<Renderer>().material.color = Color.green;
-            goodMines.Add(go);
-        }
-        else
-        {
-            go.GetComponent<Renderer>().material.color = Color.red;
-            badMines.Add(go);
+            return fitness / population.Count;
         }
 
-    }
-
-    public void RelocateMine(GameObject mine)
-    {
-        if (goodMines.Contains(mine))
-            goodMines.Remove(mine);
-        else
-            badMines.Remove(mine);
-
-        bool good = Random.Range(-1.0f, 1.0f) >= 0;
-
-        SetMineGood(good, mine);
-
-        mine.transform.position = GetRandomPos();
-    }
-
-    Vector3 GetRandomPos()
-    {
-        return new Vector3(Random.value * SceneHalfExtents.x * 2.0f - SceneHalfExtents.x, 0.0f, Random.value * SceneHalfExtents.z * 2.0f - SceneHalfExtents.z); 
-    }
-
-    Quaternion GetRandomRot()
-    {
-        return Quaternion.AngleAxis(Random.value * 360.0f, Vector3.up);
-    }
-
-    GameObject GetNearestMine(Vector3 pos)
-    {
-        GameObject nearest = mines[0];
-        float distance = (pos - nearest.transform.position).sqrMagnitude;
-
-        foreach (GameObject go in mines)
+        public float GetWorstFitness()
         {
-            float newDist = (go.transform.position - pos).sqrMagnitude;
-            if (newDist < distance)
+            float fitness = float.MaxValue;
+            foreach (Genome g in population)
             {
-                nearest = go;
-                distance = newDist;
+                if (fitness > g.fitness)
+                {
+                    fitness = g.fitness;
+                }
+            }
+
+            return fitness;
+        }
+
+        public Agent GetBestAgent()
+        {
+            if (agentsInTeam.Count == 0)
+            {
+                Debug.Log("No Agents Left in Team");
+                return null;
+            }
+
+            Agent agent = agentsInTeam[0];
+            Genome bestGenome = population[0];
+
+            for (int i = 0; i < population.Count; i++)
+            {
+                if (agentsInTeam[i].state == State.Alive && population[i].fitness > bestGenome.fitness)
+                {
+                    bestGenome = population[i];
+                    agent = agentsInTeam[i];
+                }
+            }
+
+            return agent;
+        }
+
+        public List<Agent> SearchForAgentsThatCanCross()
+        {
+            List<Agent> agents = new List<Agent>();
+            return agents;
+        }
+
+        public bool AllAgentsDone()
+        {
+            List<Agent> agentsNotDone = agentsInTeam.Where(agent => agent.CurrentTurn != actualTurn).ToList();
+
+            return agentsNotDone.Count < 1;
+        }
+
+        private void Awake()
+        {
+            Load();
+        }
+
+        public void Load()
+        {
+            if (ID == null)
+                return;
+
+            PopulationCount = PlayerPrefs.GetInt("PopulationCount_" + ID, 100);
+            EliteCount = PlayerPrefs.GetInt("EliteCount_" + ID, 0);
+            MutationChance = PlayerPrefs.GetFloat("MutationChance_" + ID, 5);
+            MutationRate = PlayerPrefs.GetFloat("MutationRate_" + ID, 3);
+            InputsCount = PlayerPrefs.GetInt("InputsCount_" + ID, 25);
+            HiddenLayers = PlayerPrefs.GetInt("HiddenLayers_" + ID, 2);
+            OutputsCount = PlayerPrefs.GetInt("OutputsCount_" + ID, 4);
+            NeuronsCountPerHL = PlayerPrefs.GetInt("NeuronsCountPerHL_" + ID, 14);
+            Bias = PlayerPrefs.GetFloat("Bias_" + ID, -2);
+            Sigmoid = PlayerPrefs.GetFloat("P_" + ID, 0.27f);
+        }
+
+        public void Save()
+        {
+            if (ID == null)
+                return;
+
+            PlayerPrefs.SetFloat("PopulationCount_" + ID, 100);
+            PlayerPrefs.SetFloat("EliteCount_" + ID, 0);
+            PlayerPrefs.SetFloat("MutationChance_" + ID, 5);
+            PlayerPrefs.SetFloat("MutationRate_" + ID, 3);
+            PlayerPrefs.SetFloat("InputsCount_" + ID, 25);
+            PlayerPrefs.SetFloat("HiddenLayers_" + ID, 2);
+            PlayerPrefs.SetFloat("OutputsCount_" + ID, 4);
+            PlayerPrefs.SetFloat("NeuronsCountPerHL_" + ID, 14);
+            PlayerPrefs.SetFloat("Bias_" + ID, -2);
+            PlayerPrefs.SetFloat("P_" + ID, 0.27f);
+        }
+
+        public void StartSimulation(List<Vector2Int> initialPositions, gamegrid map, FoodManager food, Agent loadedAgentData)
+        {
+            this.mapHandler = map;
+            this.foodHandler = food;
+
+            Save();
+
+            geneticAlgorithm = new GeneticAlgorithm(EliteCount, MutationChance, MutationRate);
+
+            GenerateInitialPopulation(initialPositions, loadedAgentData);
+
+            isRunning = true;
+        }
+
+        public void EndedGeneration()
+        {
+            Epoch();
+        }
+
+        public void PauseSimulation()
+        {
+            isRunning = false;
+        }
+
+        public void StopSimulation()
+        {
+            Save();
+
+            isRunning = false;
+
+            generation = 0;
+
+            DestroyBadAgents();
+        }
+
+        public void UpdateTurn(int currentTurn)
+        {
+            actualTurn = currentTurn;
+        }
+
+        private void DestroyBadAgents()
+        {
+            foreach (Agent go in agentsInTeam)
+                Destroy(go.gameObject);
+
+            agentsInTeam.Clear();
+            population.Clear();
+            brains.Clear();
+        }
+
+        void DestroyUselessAgents(int amount)
+        {
+            List<Agent> toDestroyAgents = new List<Agent>();
+
+            int originalAmountAIs = agentsInTeam.Count;
+
+            for (int i = 0; i < amount; i++)
+            {
+                if (amount < originalAmountAIs)
+                {
+                    toDestroyAgents.Add(agentsInTeam[i]);
+                }
+                else
+                {
+                    toDestroyAgents.AddRange(agentsInTeam);
+                }
+            }
+
+            for (int i = 0; i < toDestroyAgents.Count; i++)
+            {
+                if (toDestroyAgents[i] != null)
+                {
+                    agentsInTeam.Remove(toDestroyAgents[i]);
+                    Destroy(toDestroyAgents[i].gameObject);
+                }
+            }
+
+            if (agentsInTeam.Count < 1)
+            {
+                onTeamWipe?.Invoke();
+                population.Clear();
             }
         }
 
-        return nearest;
-    }   
-
-    GameObject GetNearestGoodMine(Vector3 pos)
-    {
-        GameObject nearest = mines[0];
-        float distance = (pos - nearest.transform.position).sqrMagnitude;
-
-        foreach (GameObject go in goodMines)
+        private void Epoch()
         {
-            float newDist = (go.transform.position - pos).sqrMagnitude;
-            if (newDist < distance)
+            generation++;
+
+            bestFitness = GetBestFitness();
+            avgFitness = GetAverageFitness();
+            worstFitness = GetWorstFitness();
+
+            List<Genome> genomesThatSurvived = new List<Genome>();
+
+            for (int i = 0; i < agentsInTeam.Count; i++)
             {
-                nearest = go;
-                distance = newDist;
+                if (agentsInTeam[i] != null)
+                {
+                    agentsInTeam[i].OnGenerationEnded(out Genome genomeSurvived);
+
+                    if (genomeSurvived != null)
+                    {
+                        genomeSurvived.generationsSurvived++;
+
+                        if (genomeSurvived.generationsSurvived < 4)
+                        {
+                            genomesThatSurvived.Add(genomeSurvived);
+                        }
+                    }
+                }
+            }
+
+            List<Genome> newGenomes = geneticAlgorithm.Epoch(genomesThatSurvived.ToArray(), PopulationCount, 2).ToList();
+
+            population.Clear();
+
+            for (int i = 0; i < newGenomes.Count; i++)
+            {
+                if (i < PopulationCount)
+                {
+                    population.Add(newGenomes[i]);
+                }
+            }
+
+            if (population.Count < PopulationCount)
+            {
+                int difference = PopulationCount - population.Count;
+                DestroyUselessAgents(difference);
+            }
+
+            actualPopulation = population.Count;
+
+            // Set the new genomes as each NeuralNetwork weights 
+            for (int i = 0; i < population.Count; i++)
+            {
+                NeuralNetwork brain = brains[i];
+                brain.SetWeights(newGenomes[i].genome);
+                agentsInTeam[i].SetBrain(newGenomes[i], brain);
             }
         }
 
-        return nearest;
-    }   
-
-    GameObject GetNearestBadMine(Vector3 pos)
-    {
-        GameObject nearest = mines[0];
-        float distance = (pos - nearest.transform.position).sqrMagnitude;
-
-        foreach (GameObject go in badMines)
+        public void UpdatePopulation()
         {
-            float newDist = (go.transform.position - pos).sqrMagnitude;
-            if (newDist < distance)
+            if (!isRunning)
+                return;
+
+            float dt = Time.fixedDeltaTime;
+
+            for (int i = 0; i < Mathf.Clamp((float)IterationCount, 1, 100); i++)
             {
-                nearest = go;
-                distance = newDist;
+                foreach (AgentMind agent in agentsInTeam)
+                {
+                    // Think!! 
+                    if (agent.state == State.Alive)
+                    {
+                        agent.Think(dt, actualTurn, IterationCount, mapHandler, foodHandler);
+                    }
+                }
             }
         }
 
-        return nearest;
-    }   
+        private void GenerateInitialPopulation(List<Vector2Int> initialPositions, AgentGenData loadedAgentData = null)
+        {
+            generation = 0;
+            DestroyBadAgents();
 
-#endregion
+            for (int i = 0; i < PopulationCount; i++)
+            {
+                NeuralNetwork brain = null;
+                Genome genome = null;
 
-}
+                if (loadedAgentData != null)
+                {
+                    brain = CreateBrain(loadedAgentData.neuralNetwork);
+                    genome = loadedAgentData.genome;
+                }
+                else
+                {
+                    brain = CreateBrain();
+                    genome = new Genome(brain.GetTotalWeightsCount());
+                    brain.SetWeights(genome.genome);
+                }
+
+                brains.Add(brain);
+                population.Add(genome);
+
+                Agent generatedAgent = CreateAgent(initialPositions[i], genome, brain);
+                agentsInTeam.Add(generatedAgent);
+            }
+
+            bestFitness = GetBestFitness();
+            avgFitness = GetAverageFitness();
+            worstFitness = GetWorstFitness();
+        }
+
+        private Agent CreateAgent(Vector2Int position, Genome genome, NeuralNetwork brain)
+        {
+            Vector2Int finalPosition = new Vector2Int(position.x, position.y);
+            GameObject go = Instantiate<GameObject>(AgentInstance);
+            Agent b = go.GetComponent<Agent>();
+            b.Init(position);
+            b.SetBrain(genome, brain, false);
+            b.SetInitialPosition(finalPosition);
+            return b;
+        }
+
+    
+
+        private NeuralNetwork CreateBrain()
+        {
+            NeuralNetwork brain = new NeuralNetwork(NeuronsCountPerHL, OutputsCount);
+
+            // Add first neuron layer that has as many neurons as inputs
+            brain.AddFirstNeuronLayer(InputsCount, Bias, Sigmoid);
+
+            for (int i = 0; i < HiddenLayers; i++)
+            {
+                // Add each hidden layer with custom neurons count
+                brain.AddNeuronLayer(NeuronsCountPerHL, Bias, Sigmoid);
+            }
+
+            // Add the output layer with as many neurons as outputs
+            brain.AddNeuronLayer(OutputsCount, Bias, Sigmoid);
+
+            return brain;
+        }
+
+        private NeuralNetwork CreateBrain(NeuralNetwork neuralNetwork)
+        {
+            NeuralNetwork brain = new NeuralNetwork(neuralNetwork.neuronCountsPerLayer, neuralNetwork.outputsCount);
+
+            if (neuralNetwork.layers.Count < 1)
+                return null;
+
+            Bias = neuralNetwork.layers[0].bias;
+            Sigmoid = neuralNetwork.layers[0].p;
+            NeuronsCountPerHL = neuralNetwork.neuronCountsPerLayer;
+
+            // Add first neuron layer that has as many neurons as inputs
+            brain.AddFirstNeuronLayer(neuralNetwork.inputsCount, Bias, Sigmoid);
+
+            for (int i = 0; i < neuralNetwork.layers.Count; i++)
+            {
+                // Add each hidden layer with custom neurons count
+                brain.AddNeuronLayer(NeuronsCountPerHL, neuralNetwork.layers[i].bias, neuralNetwork.layers[i].p);
+            }
+
+            // Add the output layer with as many neurons as outputs
+            brain.AddNeuronLayer(neuralNetwork.outputsCount, Bias, Sigmoid);
+
+            return brain;
+        }
+    }
