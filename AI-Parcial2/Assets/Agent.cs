@@ -1,31 +1,201 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using AI.Utils;
 using UnityEngine.EventSystems;
 
+
+public class AgentGenData
+{
+    public Genome genome;
+    public NeuralNetwork neuralNetwork;
+    public int generation;
+}
+
+public enum State
+{
+    Alive,
+    Dead
+}
+
 public class Agent : MonoBehaviour
 {
+    #region ACTUAL ALGORITHM STUFF
+    protected Genome genome;
+    public Genome Genome => genome;
+
+    protected NeuralNetwork neuralNetwork;
+    public NeuralNetwork NeuralNetwork => neuralNetwork;
+
+    protected AgentBehaviour agentBehaviour;
+    public AgentBehaviour AgentBehaviour => agentBehaviour;
+
+    protected int currentTurn = 0;
+    public int CurrentTurn => currentTurn;
+
+    protected int foodEaten = 0;
+    public int FoodEaten => foodEaten;
+
+    protected int currentIteration = 0;
+    public int CurrentIteration => currentIteration;
+
+    protected AgentGenData agentData;
+    public AgentGenData AgentData => agentData;
+    private int generationsSurvived = 0;
+    #endregion
+
+
 
     [SerializeField] Material[] teamMaterials = new Material[2];
     [SerializeField] Vector2Int position;
+    Vector2Int lastPosition;
+    Vector2Int initialPosition;
 
     [SerializeField] AgentBehaviour behaviour;
     FoodManager foodHandler;
+    int foodCollected;
+    gamegrid map;
 
-
-    public void Init(Vector2Int pos, FoodManager fHandler, bool team = true)
+    public State state
     {
-        UpdatePosition(pos);
-        foodHandler = fHandler;
+        get; private set;
+    }
+    private void Awake()
+    {
+        agentBehaviour = GetComponent<AgentBehaviour>();
+        lastPosition = default;
+        generationsSurvived = 0;
+    }
 
-        if (team)
+    public void SetInitialPosition(Vector2Int initialPosition)
+    {
+        this.initialPosition = initialPosition;
+    }
+
+    public void SetBrain(Genome genome, NeuralNetwork neuralNetwork, bool resetAI = true)
+    {
+        this.genome = genome;
+        this.neuralNetwork = neuralNetwork;
+        state = State.Alive;
+
+        agentData = new AgentGenData();
+
+        agentData.genome = genome;
+        agentData.neuralNetwork = neuralNetwork;
+
+        lastPosition = position;
+
+        if (resetAI)
         {
-            this.transform.GetComponent<MeshRenderer>().material = teamMaterials[0];
+            OnReset();
         }
-        else {
-            this.transform.GetComponent<MeshRenderer>().material = teamMaterials[1];
+    }
+
+    public void Think(float dt, int turn, int iteration, gamegrid map, FoodManager food)
+    {
+        if (state == State.Alive)
+        {
+            currentTurn = turn;
+            currentIteration = iteration;
+
+            this.map = map;
+
+            agentBehaviour.SetBehaviourNeeds(OnAteFood, food);
+
+            OnThink(dt, map, food);
+        }
+    }
+
+    private void OnAteFood(Vector2Int foodPosition)
+    {
+        genome.fitness = genome.fitness > 0 ? genome.fitness * 2 : 100;
+        foodCollected++;
+       
+        if (map.GetGridCell(foodPosition).hasFood)
+        {
+            map.GetGridCell(foodPosition).FoodWasEaten();
+        }
+    }
+
+    public virtual void OnGenerationEnded(out Genome genome)
+    {
+        genome = null;
+
+        if (foodCollected < 1)
+        {
+            state = State.Dead;
+            return;
+        }
+        else
+        {
+            state = State.Alive;
+        }
+
+        genome = this.genome;
+    }
+    protected virtual void OnThink(float dt, gamegrid map, FoodManager food)
+    {
+       
+
+        List<GridCell> agentAdjancentCells = map.FindAdjacents(map.GetGridCell(position));
+
+        List<float> inputs = new List<float>();
+        float[] outputs;
+
+        lastPosition = position;
+
+        inputs.Add(foodCollected);
+        inputs.Add(agentBehaviour.transform.position.magnitude); //preguntar a gonza
+        inputs.Add(FindClosestFood(food));
+
+        if (agentAdjancentCells.Any()) //Existe literalmente cualquier cosa aca?
+        {
+            for (int i = 0; i < agentAdjancentCells.Count; i++)
+            {
+                inputs.Add(Vector3.Distance(agentBehaviour.transform.position,
+                    new Vector3(agentAdjancentCells[i].GetPosition().x, agentAdjancentCells[i].GetPosition().y,
+                    HSSUtils.defaultZ)));
+
+                
+            }
+        }
+
+        outputs = neuralNetwork.Synapsis(inputs.ToArray());
+
+        for (int i = 0; i < outputs.Length; i++)
+        {
+            if (outputs[i] < 1.0f && outputs[i] > 0.75f)
+            {
+                
+                agentBehaviour.Movement(MoveDirection.Up, position.x, position.y, 100,100); //Still hardcoded to 100 gridsize
+                genome.fitness += 0.75f;
+            }
+            if (outputs[i] < 0.75f && outputs[i] > 0.50f)
+            {
+                
+                agentBehaviour.Movement(MoveDirection.Down, position.x, position.y, 100, 100);
+                genome.fitness += 0.75f;
+            }
+            if (outputs[i] < 0.50f && outputs[i] > 0.25f)
+            {
+                
+                agentBehaviour.Movement(MoveDirection.Right, position.x, position.y, 100, 100);
+                genome.fitness += 0.75f;
+            }
+            if (outputs[i] < 0.25f && outputs[i] > 0.00f)
+            {
+                
+                agentBehaviour.Movement(MoveDirection.Left, position.x, position.y, 100, 100);
+                genome.fitness += 0.75f;
+            }
+            if (outputs[i] < 0)
+            {
+                
+                agentBehaviour.Movement(MoveDirection.None, position.x, position.y, 100, 100);
+                genome.fitness += 0.50f;
+            }
         }
     }
 
@@ -33,7 +203,41 @@ public class Agent : MonoBehaviour
         position.x = pos.x;
         position.y = pos.y;
 
-        transform.position = new Vector3(pos.x * HSSUtils.GridSpaceSize, pos.y * HSSUtils.GridSpaceSize, -5f);
+        transform.position = HSSUtils.GetWorldFromPosition(position);
+    }
+
+    protected virtual void OnReset()
+    {
+        genome.fitness = 0.0f;
+        foodCollected = 0;
+        position = initialPosition;
+        transform.position = HSSUtils.GetWorldFromPosition(position);
+    }
+
+
+    private float FindClosestFood(FoodManager food)
+    {
+        if (food == null ||  food.GetCurrentFood() < 1)
+            return 0f;
+
+        float closestFood = Vector3.Distance(agentBehaviour.transform.position,
+            new Vector3(food.foodList[0].GetPosition().x, food.foodList[0].GetPosition().y, HSSUtils.defaultZ));
+
+        for (int i = 0; i < food.GetCurrentFood(); i++)
+        {
+            if (food.foodList[i] != null)
+            {
+                float newDistance = Vector3.Distance(agentBehaviour.transform.position,
+                    new Vector3(food.foodList[0].GetPosition().x, food.foodList[0].GetPosition().y, HSSUtils.defaultZ));
+
+                if (closestFood < newDistance)
+                {
+                    closestFood = newDistance;
+                }
+            }
+        }
+
+        return closestFood;
     }
 
     private void Update()
@@ -57,6 +261,19 @@ public class Agent : MonoBehaviour
         {
             position = behaviour.Movement(MoveDirection.Right, position.x, position.y, 100, 100); //100 IS HARDCODED MAX GRID VALUE.
             transform.position = HSSUtils.GetWorldFromPosition(position);
+        }
+    }
+    public void Init(Vector2Int pos, FoodManager fHandler, bool team = true)
+    {
+        UpdatePosition(pos);
+        foodHandler = fHandler;
+
+        if (team)
+        {
+            this.transform.GetComponent<MeshRenderer>().material = teamMaterials[0];
+        }
+        else {
+            this.transform.GetComponent<MeshRenderer>().material = teamMaterials[1];
         }
     }
 }

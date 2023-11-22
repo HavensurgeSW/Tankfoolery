@@ -57,8 +57,7 @@ public class AgentBehaviour : MonoBehaviour
                 {
                     //transform.position = new Vector3(transform.position.x - 1, transform.position.y, transform.position.z);
                     finalPos.x -= 1;
-                    
-                    
+
                 }
                 else
                 {

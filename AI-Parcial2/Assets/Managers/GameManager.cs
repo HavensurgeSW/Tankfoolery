@@ -17,7 +17,7 @@ public class GameManager : MonoBehaviour
         StartGame();
     }
 
-    void StartGame() {
+    public void StartGame(){
         Vector2Int sizeAPI = new Vector2Int(gridSize, gridSize);
 
         gameGrid.CreateGrid(sizeAPI);
@@ -25,9 +25,9 @@ public class GameManager : MonoBehaviour
 
         PopulateBoardWithAgents();
 
-    }
+    } 
 
-    void PopulateBoardWithAgents() { 
+    public void PopulateBoardWithAgents(){ 
         for (int i = 0; i < gridSize; i++)
         {
             Instantiate(agent);
@@ -37,7 +37,7 @@ public class GameManager : MonoBehaviour
         for (int i = 0; i < gridSize; i++)
         {
             Instantiate(agent);
-            agent.GetComponent<Agent>().Init(new Vector2Int(i, gridSize-1), foodManager, false);
+            agent.GetComponent<Agent>().Init(new Vector2Int(i, gridSize), foodManager, false);
         }
     }
     void SwitchTurn() { 

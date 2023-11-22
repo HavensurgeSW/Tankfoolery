@@ -32,5 +32,11 @@ public class gamegrid : MonoBehaviour
     public GridCell GetGridCell(Vector2Int gridPos){
         return gameGrid[gridPos.x, gridPos.y].GetComponent<GridCell>();
     }
+
+    public List<GridCell> FindAdjacents(GridCell gc) {
+        return gc.GetAdjacents();
+    }
+
+    
     
 }

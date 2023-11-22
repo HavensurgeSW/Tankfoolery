@@ -22,10 +22,11 @@ public class SimulationScreen : MonoBehaviour
     string timerText;
     int lastGeneration = 0;
 
-    // Start is called before the first frame update
+
     void Start()
     {
         timerSlider.onValueChanged.AddListener(OnTimerChange);
+
         timerText = timerTxt.text;
 
         timerTxt.text = string.Format(timerText, PopulationManager.Instance.IterationCount);
