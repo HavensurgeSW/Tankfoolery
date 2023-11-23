@@ -12,10 +12,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] gamegrid gameGrid;
    
     bool playerTurn = false;
-    void Start()
-    {
-        StartGame();
-    }
+    
 
     public void StartGame(){
         Vector2Int sizeAPI = new Vector2Int(gridSize, gridSize);

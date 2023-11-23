@@ -86,8 +86,9 @@ public class FoodManager : MonoBehaviour
     public void ClearFood() {
         foreach (Food f in foodList) {
             GameGrid.GetGridCell(f.GetPosition()).FoodWasEaten();
-            foodList.Remove(f);
         }
+        foodList.Clear(); ;
+        
         currentFood = 0;
     }
 }

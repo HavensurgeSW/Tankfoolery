@@ -1,3 +1,4 @@
+using AI.Utils;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
@@ -13,6 +14,11 @@ public class GridCell : MonoBehaviour
     public bool hasFood;
     public bool isOccupied;
 
+
+    public void Init(int x, int y, gamegrid m) {
+        SetPosition(x,y);
+        map = m;
+    }
     public void SetPosition(int x, int y) { 
         pos.x = x; 
         pos.y = y;
@@ -38,16 +44,53 @@ public class GridCell : MonoBehaviour
         //Solo llamar DESPUES de generar el mapa
         adjacents = new List<GridCell>();
 
-        GridCell upPosition = map.GetGridCell(new Vector2Int(pos.x, pos.y + 1));
-        GridCell downPosition = map.GetGridCell(new Vector2Int(pos.x, pos.y-1));
-        GridCell leftPosition = map.GetGridCell(new Vector2Int(pos.x-1, pos.y));
-        GridCell rightPosition = map.GetGridCell(new Vector2Int(pos.x+1, pos.y));
+        GridCell leftPosition = null;
+        GridCell upPosition = null;
+        GridCell downPosition = null;
+        GridCell rightPosition = null;
 
-        adjacents.Add(upPosition);
-        adjacents.Add(downPosition);
-        adjacents.Add(leftPosition);
-        adjacents.Add(rightPosition);
+       
+        if (!(pos.x == HSSUtils.GetGridSize() - 1))
+        {
+            rightPosition = map.GetGridCell(new Vector2Int(pos.x + 1, pos.y));
+            adjacents.Add(rightPosition);
+        }
+        else {
+            rightPosition = null;
+            //adjacents.Add(null);
+        }
 
+        if (!(pos.x == 0))
+        {
+            leftPosition = map.GetGridCell(new Vector2Int(pos.x -1, pos.y));
+            adjacents.Add(leftPosition);
+        }
+        else {
+            leftPosition = null;
+            //adjacents.Add(leftPosition);
+        }
+
+        if (!(pos.y == 0))
+        {
+            downPosition = map.GetGridCell(new Vector2Int(pos.x, pos.y-1));
+            adjacents.Add(downPosition);
+        }
+        else
+        {
+            downPosition = null;
+            //adjacents.Add(downPosition);
+        }
+
+        if (!(pos.y == HSSUtils.GetGridSize() - 1))
+        {
+            upPosition = map.GetGridCell(new Vector2Int(pos.x, pos.y+1));
+            adjacents.Add(upPosition);
+        }
+        else
+        {
+            upPosition = null;
+            //adjacents.Add(upPosition);
+        }
     }
 
     public List<GridCell> GetAdjacents(){

@@ -69,8 +69,7 @@ public class SimOverseer : MonoBehaviour
         lastAgentSaved.Clear();
 
         gameGrid.CreateGrid(new Vector2Int(100,100));
-       
-
+        
         pauseButton.onClick.AddListener(OnPauseButtonClick);
         stopButton.onClick.AddListener(OnStopButtonClick);
 
@@ -79,11 +78,10 @@ public class SimOverseer : MonoBehaviour
 
         for (int i = 0; i < teams.Count; i++)
         {
-            if (teams[i] != null)
-            {
-                teams[i].simConfig.Init(HSSUtils.GetGridSize(), teams[i].populationManager);
-                teams[i].populationManager.onTeamWipe += OnPauseButtonClick;
-            }
+           
+           teams[i].simConfig.Init(HSSUtils.GetGridSize(), teams[i].populationManager);
+           teams[i].populationManager.onTeamWipe += OnPauseButtonClick;
+            
         }
 
         //gameManager.PopulateBoardWithAgents();
@@ -210,7 +208,7 @@ public class SimOverseer : MonoBehaviour
                 else {
                     for (int j = 0; j < HSSUtils.gridSize; j++)
                     {
-                        finalTeamPositions.Add(new Vector2Int(j, HSSUtils.gridSize));
+                        finalTeamPositions.Add(new Vector2Int(j, HSSUtils.gridSize-1));
 
                     }
                 }

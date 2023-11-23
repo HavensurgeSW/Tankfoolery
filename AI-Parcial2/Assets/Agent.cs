@@ -137,7 +137,6 @@ public class Agent : MonoBehaviour
     }
     protected virtual void OnThink(float dt, gamegrid map, FoodManager food)
     {
-       
 
         List<GridCell> agentAdjancentCells = map.FindAdjacents(map.GetGridCell(position));
 
