@@ -69,6 +69,7 @@ public class SimOverseer : MonoBehaviour
         lastAgentSaved.Clear();
 
         gameGrid.CreateGrid(new Vector2Int(100,100));
+       
 
         pauseButton.onClick.AddListener(OnPauseButtonClick);
         stopButton.onClick.AddListener(OnStopButtonClick);

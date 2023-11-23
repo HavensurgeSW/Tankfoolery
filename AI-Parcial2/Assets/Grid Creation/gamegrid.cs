@@ -26,6 +26,14 @@ public class gamegrid : MonoBehaviour
             }
         }
 
+        for (int y = 0; y < size.y; y++)
+        {
+            for (int x = 0; x < size.x; x++)
+            {
+                gameGrid[x, y].GetComponent<GridCell>().SetAdjacents();
+            }
+        }
+
 
     }
 
