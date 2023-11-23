@@ -20,7 +20,7 @@ public class AgentBehaviour : MonoBehaviour
     public string foodTag = "Food";
 
     FoodManager foodHandler = null;
-    Action<Vector2Int> onFoodEaten = null;
+    Action onFoodEaten = null;
     private void Awake()
     {
         foodHandler = FindObjectOfType<FoodManager>();
@@ -28,15 +28,16 @@ public class AgentBehaviour : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.tag ==foodTag)
+        if (collision.gameObject.tag == foodTag)
         {
             Food food = collision.transform.GetComponent<Food>();
+            onFoodEaten.Invoke();
             foodHandler.EatFood(food.GetPosition());
-            Destroy(collision.gameObject);          
+            Destroy(collision.gameObject);
         }
     }
 
-    public void SetBehaviourNeeds(Action<Vector2Int> onFoodEaten, FoodManager foodHandler)
+    public void SetBehaviourNeeds(Action onFoodEaten, FoodManager foodHandler)
     {
         this.onFoodEaten = onFoodEaten;
 

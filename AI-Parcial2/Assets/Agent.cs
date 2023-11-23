@@ -109,16 +109,12 @@ public class Agent : MonoBehaviour
         }
     }
 
-    private void OnAteFood(Vector2Int foodPosition)
+    private void OnAteFood()
     {
         Debug.Log("OnAteFood()");
-        genome.fitness = genome.fitness > 0 ? genome.fitness * 2 : 10;
         foodCollected++;
+        genome.fitness = genome.fitness > 0 ? genome.fitness * 2 : 10;
        
-        if (map.GetGridCell(foodPosition).hasFood)
-        {
-            map.GetGridCell(foodPosition).FoodWasEaten();
-        }
     }
 
     public virtual void OnGenerationEnded(out Genome genome)
@@ -148,7 +144,7 @@ public class Agent : MonoBehaviour
         lastPosition = position;
 
         inputs.Add(foodCollected);
-        inputs.Add(agentBehaviour.transform.position.magnitude);
+        //inputs.Add(agentBehaviour.transform.position.magnitude);
         inputs.Add(FindClosestFood(food));
 
         if (agentAdjancentCells.Any()) //Existe literalmente cualquier cosa aca?
