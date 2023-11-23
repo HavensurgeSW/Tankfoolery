@@ -110,7 +110,7 @@ public class Agent : MonoBehaviour
 
     private void OnAteFood(Vector2Int foodPosition)
     {
-        genome.fitness = genome.fitness > 0 ? genome.fitness * 2 : 100;
+        genome.fitness = genome.fitness > 0 ? genome.fitness * 2 : 10;
         foodCollected++;
        
         if (map.GetGridCell(foodPosition).hasFood)
@@ -170,31 +170,31 @@ public class Agent : MonoBehaviour
             {
                 
                 agentBehaviour.Movement(MoveDirection.Up, position.x, position.y, 100,100); //Still hardcoded to 100 gridsize
-                genome.fitness += 0.75f;
+                
             }
             if (outputs[i] < 0.75f && outputs[i] > 0.50f)
             {
                 
                 agentBehaviour.Movement(MoveDirection.Down, position.x, position.y, 100, 100);
-                genome.fitness += 0.75f;
+                
             }
             if (outputs[i] < 0.50f && outputs[i] > 0.25f)
             {
                 
                 agentBehaviour.Movement(MoveDirection.Right, position.x, position.y, 100, 100);
-                genome.fitness += 0.75f;
+                
             }
             if (outputs[i] < 0.25f && outputs[i] > 0.00f)
             {
                 
                 agentBehaviour.Movement(MoveDirection.Left, position.x, position.y, 100, 100);
-                genome.fitness += 0.75f;
+                
             }
             if (outputs[i] < 0)
             {
                 
                 agentBehaviour.Movement(MoveDirection.None, position.x, position.y, 100, 100);
-                genome.fitness += 0.50f;
+                
             }
         }
     }

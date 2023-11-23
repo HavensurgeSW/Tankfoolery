@@ -16,8 +16,10 @@ public class SimOverseer : MonoBehaviour
     [SerializeField] private List<Team> teams = null;
     [SerializeField] private FoodManager foodHandler = null;
     [SerializeField] private GameManager gameManager = null;
+    [SerializeField] private gamegrid gameGrid = null;
     [SerializeField] private Button pauseButton = null;
     [SerializeField] private Button stopButton = null;
+    
 
     [SerializeField] private TMP_Text turnAmountText = null;
     [SerializeField] private int maxTurnsAllowed = 0;
@@ -194,13 +196,28 @@ public class SimOverseer : MonoBehaviour
                 totalFood += teams[i].populationManager.PopulationCount;
                 teams[i].simConfig.gameObject.SetActive(false);
 
-               
+                List<Vector2Int> finalTeamPositions = new List<Vector2Int>();
+                if (i == 0)
+                {
+                    for (int j = 0; j < HSSUtils.gridSize; j++)
+                    {
+                        finalTeamPositions.Add(new Vector2Int(j, 0));
 
-                teams[i].populationManager.StartSimulation(finalTeamPositions, mapHandler, foodHandler, LoadBestAgentFromTeam(i));
+                    }
+                }
+                else {
+                    for (int j = 0; j < HSSUtils.gridSize; j++)
+                    {
+                        finalTeamPositions.Add(new Vector2Int(j, HSSUtils.gridSize));
+
+                    }
+                }
+
+                teams[i].populationManager.StartSimulation(finalTeamPositions, gameGrid, foodHandler, LoadBestAgentFromTeam(i));
             }
         }
-                
-        foodHandler.PopulateGridWithFood(HSSUtils.GetGridSize());
+
+        foodHandler.PopulateGridWithFood();
     }
 
     private void OnEndedAllTurns()
@@ -219,12 +236,8 @@ public class SimOverseer : MonoBehaviour
                 teams[i].populationManager.EndedGeneration();
         }
 
-        foodHandler.Unload();
-        mapHandler.ClearFoodOnCells();
-
-
-        foodHandler.Init(mapHandler.GetRandomUniquePositions(totalFood));
-        mapHandler.SetGeneratedFoodOnCells(foodHandler.FoodInMap); //shuffle food
+        foodHandler.ClearFood();
+        foodHandler.PopulateGridWithFood();
     }
 
     private void OnPauseButtonClick()
@@ -249,8 +262,8 @@ public class SimOverseer : MonoBehaviour
         {
             if (teams[i] != null)
             {
-                teams[i].StartConfig.gameObject.SetActive(true);
-                teams[i].StartConfig.OnStopSimulation();
+                teams[i].simConfig.gameObject.SetActive(true);
+                teams[i].simConfig.OnStopSimulation();
                 teams[i].populationManager.StopSimulation();
             }
         }
@@ -260,7 +273,7 @@ public class SimOverseer : MonoBehaviour
         pauseButton.gameObject.SetActive(false);
         stopButton.gameObject.SetActive(false);
 
-        foodHandler.Unload();
+        foodHandler.ClearFood();
 
         currentTurn = 0;
         turnAmountText.text = "Turn: " + currentTurn.ToString();
