@@ -105,11 +105,13 @@ public class Agent : MonoBehaviour
             agentBehaviour.SetBehaviourNeeds(OnAteFood, food);
 
             OnThink(dt, map, food);
+            
         }
     }
 
     private void OnAteFood(Vector2Int foodPosition)
     {
+        Debug.Log("OnAteFood()");
         genome.fitness = genome.fitness > 0 ? genome.fitness * 2 : 10;
         foodCollected++;
        
@@ -146,7 +148,7 @@ public class Agent : MonoBehaviour
         lastPosition = position;
 
         inputs.Add(foodCollected);
-        inputs.Add(agentBehaviour.transform.position.magnitude); //preguntar a gonza
+        inputs.Add(agentBehaviour.transform.position.magnitude);
         inputs.Add(FindClosestFood(food));
 
         if (agentAdjancentCells.Any()) //Existe literalmente cualquier cosa aca?
@@ -163,39 +165,42 @@ public class Agent : MonoBehaviour
 
         outputs = neuralNetwork.Synapsis(inputs.ToArray());
 
+        Vector2Int resultingMove = new Vector2Int();
         for (int i = 0; i < outputs.Length; i++)
         {
+
             if (outputs[i] < 1.0f && outputs[i] > 0.75f)
             {
                 
-                agentBehaviour.Movement(MoveDirection.Up, position.x, position.y, 100,100); //Still hardcoded to 100 gridsize
+                resultingMove = agentBehaviour.Movement(MoveDirection.Up, position.x, position.y, 100,100); //Still hardcoded to 100 gridsize
                 
             }
             if (outputs[i] < 0.75f && outputs[i] > 0.50f)
             {
-                
-                agentBehaviour.Movement(MoveDirection.Down, position.x, position.y, 100, 100);
+
+                resultingMove = agentBehaviour.Movement(MoveDirection.Down, position.x, position.y, 100, 100);
                 
             }
             if (outputs[i] < 0.50f && outputs[i] > 0.25f)
             {
-                
-                agentBehaviour.Movement(MoveDirection.Right, position.x, position.y, 100, 100);
+
+                resultingMove = agentBehaviour.Movement(MoveDirection.Right, position.x, position.y, 100, 100);
                 
             }
             if (outputs[i] < 0.25f && outputs[i] > 0.00f)
             {
-                
-                agentBehaviour.Movement(MoveDirection.Left, position.x, position.y, 100, 100);
+
+                resultingMove = agentBehaviour.Movement(MoveDirection.Left, position.x, position.y, 100, 100);
                 
             }
             if (outputs[i] < 0)
             {
-                
-                agentBehaviour.Movement(MoveDirection.None, position.x, position.y, 100, 100);
+
+                resultingMove = agentBehaviour.Movement(MoveDirection.None, position.x, position.y, 100, 100);
                 
             }
         }
+        UpdatePosition(resultingMove);
     }
 
     public void UpdatePosition(Vector2Int pos) {
@@ -239,29 +244,7 @@ public class Agent : MonoBehaviour
         return closestFood;
     }
 
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.W))
-        {
-            position = behaviour.Movement(MoveDirection.Up,position.x, position.y, 100, 100); //100 IS HARDCODED MAX GRID VALUE.
-            transform.position = HSSUtils.GetWorldFromPosition(position);
-        }
-        if (Input.GetKeyDown(KeyCode.A))
-        {
-            position = behaviour.Movement(MoveDirection.Left, position.x, position.y, 100, 100); //100 IS HARDCODED MAX GRID VALUE.
-            transform.position = HSSUtils.GetWorldFromPosition(position);
-        }
-        if (Input.GetKeyDown(KeyCode.S))
-        {
-            position = behaviour.Movement(MoveDirection.Down, position.x, position.y, 100, 100); //100 IS HARDCODED MAX GRID VALUE.
-            transform.position = HSSUtils.GetWorldFromPosition(position);
-        }
-        if (Input.GetKeyDown(KeyCode.D))
-        {
-            position = behaviour.Movement(MoveDirection.Right, position.x, position.y, 100, 100); //100 IS HARDCODED MAX GRID VALUE.
-            transform.position = HSSUtils.GetWorldFromPosition(position);
-        }
-    }
+
     public void Init(Vector2Int pos, bool team = true)
     {
         UpdatePosition(pos);

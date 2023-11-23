@@ -17,9 +17,9 @@ public class PopulationManager : MonoBehaviour
         public float MutationChance = 0.10f;
         public float MutationRate = 0.01f;
 
-        public int InputsCount = 4;
+        public int InputsCount = 6;
         public int HiddenLayers = 1;
-        public int OutputsCount = 2;
+        public int OutputsCount = 1;
         public int NeuronsCountPerHL = 7;
         public float Bias = 1f;
         public float Sigmoid = 0.5f;
@@ -147,14 +147,14 @@ public class PopulationManager : MonoBehaviour
             if (ID == null)
                 return;
 
-            PopulationCount = PlayerPrefs.GetInt("PopulationCount_" + ID, 100);
+            PopulationCount = PlayerPrefs.GetInt("PopulationCount_" + ID, 50);
             EliteCount = PlayerPrefs.GetInt("EliteCount_" + ID, 0);
             MutationChance = PlayerPrefs.GetFloat("MutationChance_" + ID, 5);
             MutationRate = PlayerPrefs.GetFloat("MutationRate_" + ID, 3);
-            InputsCount = PlayerPrefs.GetInt("InputsCount_" + ID, 25);
+            InputsCount = PlayerPrefs.GetInt("InputsCount_" + ID, 6);
             HiddenLayers = PlayerPrefs.GetInt("HiddenLayers_" + ID, 2);
-            OutputsCount = PlayerPrefs.GetInt("OutputsCount_" + ID, 4);
-            NeuronsCountPerHL = PlayerPrefs.GetInt("NeuronsCountPerHL_" + ID, 14);
+            OutputsCount = PlayerPrefs.GetInt("OutputsCount_" + ID, 1);
+            NeuronsCountPerHL = PlayerPrefs.GetInt("NeuronsCountPerHL_" + ID, 3);
             Bias = PlayerPrefs.GetFloat("Bias_" + ID, -2);
             Sigmoid = PlayerPrefs.GetFloat("P_" + ID, 0.27f);
         }
@@ -168,7 +168,7 @@ public class PopulationManager : MonoBehaviour
             PlayerPrefs.SetFloat("EliteCount_" + ID, 0);
             PlayerPrefs.SetFloat("MutationChance_" + ID, 5);
             PlayerPrefs.SetFloat("MutationRate_" + ID, 3);
-            PlayerPrefs.SetFloat("InputsCount_" + ID, 25);
+            PlayerPrefs.SetFloat("InputsCount_" + ID, 6);
             PlayerPrefs.SetFloat("HiddenLayers_" + ID, 2);
             PlayerPrefs.SetFloat("OutputsCount_" + ID, 4);
             PlayerPrefs.SetFloat("NeuronsCountPerHL_" + ID, 14);
@@ -263,6 +263,7 @@ public class PopulationManager : MonoBehaviour
 
         private void Epoch()
         {
+        Debug.Log("Called EPOCH()");
             generation++;
 
             bestFitness = GetBestFitness();
@@ -317,7 +318,7 @@ public class PopulationManager : MonoBehaviour
                 agentsInTeam[i].SetBrain(newGenomes[i], brain);
             }
         }
-
+        
         public void UpdatePopulation()
         {
             if (!isRunning)
@@ -327,6 +328,7 @@ public class PopulationManager : MonoBehaviour
 
             for (int i = 0; i < Mathf.Clamp((float)IterationCount, 1, 100); i++)
             {
+
                 foreach (Agent agent in agentsInTeam)
                 {
                     // Think!! 
@@ -366,6 +368,7 @@ public class PopulationManager : MonoBehaviour
                 
 
                 Agent generatedAgent = CreateAgent(initialPositions[i], genome, brain);
+                generatedAgent.transform.name = AgentInstance.name + " " + i;
                 agentsInTeam.Add(generatedAgent);
             }
 
@@ -378,6 +381,7 @@ public class PopulationManager : MonoBehaviour
         {
             Vector2Int finalPosition = new Vector2Int(position.x, position.y);
             GameObject go = Instantiate<GameObject>(AgentInstance);
+            
             Agent b = go.GetComponent<Agent>();
             b.Init(position);
             b.SetBrain(genome, brain, false);

@@ -75,7 +75,7 @@ public class FoodManager : MonoBehaviour
 
     public void EatFood(Vector2Int foodPosition){
         Food toRemove = foodList.Find(food => food.GetPosition() == foodPosition);
-            Debug.Log("Removed food at: "+ foodPosition.x+" " +foodPosition.y);
+           
         if (foodList.Contains(toRemove)) {
             foodList.Remove(toRemove);
             GameGrid.GetGridCell(foodPosition).FoodWasEaten();

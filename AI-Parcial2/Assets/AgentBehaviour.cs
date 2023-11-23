@@ -30,10 +30,9 @@ public class AgentBehaviour : MonoBehaviour
     {
         if (collision.gameObject.tag ==foodTag)
         {
-            Debug.Log("Collided with " + foodTag);
             Food food = collision.transform.GetComponent<Food>();
             foodHandler.EatFood(food.GetPosition());
-            Destroy(collision.gameObject, 0.25f);          
+            Destroy(collision.gameObject);          
         }
     }
 
