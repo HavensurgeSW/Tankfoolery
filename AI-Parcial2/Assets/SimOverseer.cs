@@ -5,17 +5,18 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+[System.Serializable]
+public class Team
+ {
+     public PopulationManager populationManager;
+     public SimConfig simConfig;
+ }
 public class SimOverseer : MonoBehaviour
 {
-    public class Team
-    {
-        public PopulationManager populationManager;
-        public SimConfig simConfig;
-    }
 
     [SerializeField] private List<Team> teams = null;
     [SerializeField] private FoodManager foodHandler = null;
-    [SerializeField] private GameManager gameManager = null;
+    //[SerializeField] private GameManager gameManager = null;
     [SerializeField] private gamegrid gameGrid = null;
     [SerializeField] private Button pauseButton = null;
     [SerializeField] private Button stopButton = null;
@@ -67,7 +68,7 @@ public class SimOverseer : MonoBehaviour
         simulationStarted = false;
         lastAgentSaved.Clear();
 
-        gameManager.StartGame();
+        gameGrid.CreateGrid(new Vector2Int(100,100));
 
         pauseButton.onClick.AddListener(OnPauseButtonClick);
         stopButton.onClick.AddListener(OnStopButtonClick);

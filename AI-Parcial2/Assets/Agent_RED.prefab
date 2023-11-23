@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: -3710149861411922904}
   - component: {fileID: -5601715418573435912}
   m_Layer: 0
-  m_Name: Agent
+  m_Name: Agent_RED
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -128,7 +128,7 @@ MonoBehaviour:
   teamMaterials:
   - {fileID: 2100000, guid: 8dcc2ad41841a5d40b4e09d078cb9444, type: 2}
   - {fileID: 2100000, guid: 466ca7aa40cfe5a4889c796f4274e451, type: 2}
-  position: {x: 99, y: 100}
+  position: {x: 0, y: 0}
   behaviour: {fileID: 7294446672299917493}
 --- !u!54 &-5601715418573435912
 Rigidbody:
